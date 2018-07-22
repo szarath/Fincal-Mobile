@@ -28,6 +28,10 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fm = getSupportFragmentManager();
+        Class fragclass = null;
+        fragclass = Login.class;
+        fragmentchange(fragclass,fm);
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,5 +106,24 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public static void fragmentchange(Class frag,FragmentManager fm)
+    {
+        android.support.v4.app.Fragment fragment = null;
+
+
+        try{
+            fragment = (android.support.v4.app.Fragment) frag.newInstance();
+        }
+        catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+
+        fm.beginTransaction().replace(R.id.flContent,fragment).addToBackStack(fragment.getTag()).commit();
+
+
+
     }
 }
