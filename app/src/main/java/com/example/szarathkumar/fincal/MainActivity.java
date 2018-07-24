@@ -19,6 +19,17 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     public static FragmentManager fm;
 
+    public static boolean isLogcheck() {
+        return logcheck;
+    }
+
+    public static void setLogcheck(boolean logcheck) {
+        MainActivity.logcheck = logcheck;
+    }
+
+    public static boolean logcheck;
+
+
 
 
     @Override
@@ -86,21 +97,37 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
+
+        android.support.v4.app.Fragment fragment = null;
+        Class fragclass = null;
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+        if (id == R.id.nav_login) {
 
-        if (id == R.id.nav_event) {
+        } else if (id == R.id.nav_register) {
+            fragclass = Register.class;
+            fragmentchange(fragclass,fm);
+        }
+          else if (id == R.id.nav_event) {
+
+            fragclass = Eventlist.class;
+            fragmentchange(fragclass,fm);
             // Handle the camera action
         } else if (id == R.id.nav_task) {
+            fragclass = Task.class;
+            fragmentchange(fragclass,fm);
 
         } else if (id == R.id.nav_schedule) {
+            fragclass = Schedule.class;
+            fragmentchange(fragclass,fm);
 
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.nav_chat) {
+            fragclass = Googlechat.class;
+            fragmentchange(fragclass,fm);
 
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        } else if (id == R.id.nav_account) {
+            fragclass = Account.class;
+            fragmentchange(fragclass,fm);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
