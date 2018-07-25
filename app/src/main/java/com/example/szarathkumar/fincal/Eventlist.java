@@ -2,12 +2,20 @@ package com.example.szarathkumar.fincal;
 
 import android.content.Context;
 import android.net.Uri;
+import android.net.wifi.hotspot2.pps.Credential;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -63,8 +71,25 @@ public class Eventlist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_eventlist, container, false);
+
+        View view = inflater.inflate(R.layout.fragment_eventlist, container, false);
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                }
+                            });
+                        }
+                    });
+
+
+
+
+        return view;
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -74,7 +99,7 @@ public class Eventlist extends Fragment {
         }
     }
 
-    @Override
+   /* @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
@@ -84,7 +109,7 @@ public class Eventlist extends Fragment {
                     + " must implement OnFragmentInteractionListener");
         }
     }
-
+*/
     @Override
     public void onDetach() {
         super.onDetach();
@@ -105,4 +130,9 @@ public class Eventlist extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
 }
+
+
+
+

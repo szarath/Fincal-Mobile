@@ -4,7 +4,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public class eventgrid implements BaseAdapter {
+public class eventgrid extends BaseAdapter {
 
 
     @Override
