@@ -1,19 +1,24 @@
 package com.example.szarathkumar.fincal;
 
+import android.app.Application;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.net.Uri;
-import android.net.wifi.hotspot2.pps.Credential;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAuthIOException;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -33,13 +38,6 @@ import java.util.Collections;
 import java.util.List;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -53,7 +51,24 @@ public class Eventlist extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private static final String APPLICATION_NAME = "Google Calendar API Java Quickstart";
+    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    private static final String TOKENS_DIRECTORY_PATH = "tokens";
+    private static NetHttpTransport HTTP_TRANSPORT =null;
+    private TextView tv;
+    /**
+     * Global instance of the scopes required by this quickstart.
+     * If modifying these scopes, delete your previously saved credentials/ folder.
+     */
+    private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR_READONLY);
+    private static final String CREDENTIALS_FILE_PATH =  "client_secret.json";
 
+    /**
+     * Creates an authorized Credential object.
+     * @param HTTP_TRANSPORT The network HTTP Transport.
+     * @return An authorized Credential object.
+     * @throws IOException If the credentials.json file cannot be found.
+     */
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
@@ -96,25 +111,91 @@ public class Eventlist extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_eventlist, container, false);
-                    Thread t = new Thread(new Runnable() {
+        final String[] hold = new String[1];
+            tv = (TextView) view.findViewById(R.id.tvel);
+                   Thread t = new Thread(new Runnable() {
                         @Override
-                        public void run() {
+                        public void run() {  Log.d("see", "t ");
                             getActivity().runOnUiThread(new Runnable() {
+
                                 @Override
                                 public void run() {
+                                    Log.d("check", "run: ");
+                                    mainback mTask = new mainback() {
+
+
+                                        @Override
+                                        protected String doInBackground(Void... voids) {     Log.d("check", "do: ");
+                                            // Build a new authorized API client service.;
+
+
+
+
+                                            return null;
+                                        };
+
+                                        protected void onPostExecute(String message)
+                                        {
+                                            tv.setText(hold[0]);
+                                        }
+                                    };
+                                    mTask.execute();
 
                                 }
                             });
                         }
                     });
 
+        t.start();
 
+        try {
+            final NetHttpTransport HTTP_TRANSPORT = new com.google.api.client.http.javanet.NetHttpTransport();
+            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT,getAssets()))
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
 
+            // List the next 10 events from the primary calendar.
+            DateTime now = new DateTime(System.currentTimeMillis());
+            Events events = service.events().list("primary")
+                    .setMaxResults(10)
+                    .setTimeMin(now)
+                    .setOrderBy("startTime")
+                    .setSingleEvents(true)
+                    .execute();
+            List<Event> items = events.getItems();
+            Log.d("check", items.toString());
+            if (items.isEmpty()) {
+                System.out.println("No upcoming events found.");
+            } else {
+                System.out.println("Upcoming events");
+                for (Event event : items) {
+                    DateTime start = event.getStart().getDateTime();
+                    if (start == null) {
+                        start = event.getStart().getDate();
+                    }
+                    Log.d("check",  event.getSummary());
+                    System.out.printf("%s (%s)\n", event.getSummary(), start);
+                }
+            }
+        }
+        catch (Exception exc)
+        {
+            Log.d("error", exc.toString());
+        }
 
         return view;
 
     }
 
+    public AssetManager getAssets() {
+        return getAssets();
+    }
+
+    private abstract class mainback extends AsyncTask<Void, Void, String> {
+
+
+
+    }
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
@@ -154,8 +235,22 @@ public class Eventlist extends Fragment {
         void onFragmentInteraction(Uri uri);
     }
 
+
+    public Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT, AssetManager assetManager) throws IOException {
+        // Load client secrets.
+
+        InputStream in = assetManager.open(CREDENTIALS_FILE_PATH);
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+        // Build flow and trigger user authorization request.
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setAccessType("offline")
+                .build();
+        return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+
+    }
+
 }
-
-
-
 

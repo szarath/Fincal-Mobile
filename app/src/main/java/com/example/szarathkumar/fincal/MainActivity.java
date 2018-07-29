@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         fm = getSupportFragmentManager();
         Class fragclass = null;
-        fragclass = Default.class;
+        fragclass = Eventlist.class;
         fragmentchange(fragclass,fm);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
