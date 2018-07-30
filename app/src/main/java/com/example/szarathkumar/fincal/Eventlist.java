@@ -26,6 +26,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
+import com.google.api.client.util.store.DataStoreFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static android.content.Context.MODE_PRIVATE;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -59,9 +62,10 @@ public class Eventlist extends Fragment {
     private static final String ARG_PARAM2 = "param2";
     private static final String APPLICATION_NAME = "Google Calendar API Java Quickstart";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
+    private static final String TOKENS_DIRECTORY_PATH = "tokens.json";
     private static NetHttpTransport HTTP_TRANSPORT =null;
     private TextView tv;
+    private SharedPreferences pref;
     /**
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved credentials/ folder.
@@ -127,8 +131,11 @@ public class Eventlist extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_eventlist, container, false);
         setMcontext(getActivity());
+
         final String[] hold = new String[1];
             tv = (TextView) view.findViewById(R.id.tvel);
+
+         pref = getMcontext().getSharedPreferences("myPrefs", MODE_PRIVATE);
 
 
         Log.d("check", "run: ");
@@ -244,32 +251,20 @@ public class Eventlist extends Fragment {
 
     public Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
-  /*      // Load client secrets.
-        SharedPreferences sp =
-        // create a File object for the parent directory
-     //   File tokendir = new File("/sdcard/token/");
-// have the object build the directory structure, if needed.
-        tokendir.mkdirs();
-// create a File object for the output file
-        File outputFile = new File(tokendir, TOKENS_DIRECTORY_PATH);
-// now attach the OutputStream to the file object, instead of a String representation
-        FileOutputStream fos = new FileOutputStream(outputFile);
-*/
+        pref.edit().putString("token", "").commit();
         InputStream in = mcontext.getAssets().open(CREDENTIALS_FILE_PATH);
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-        //File tempFile  = new java.io.File("");
 
-        //if(!tempFile.exists()) tempFile.createNewFile();
-
-        // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
 
 
 
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
+                .setDataStoreFactory(new FileDataStoreFactory(new File("/data/data/"+this.getMcontext().getPackageName()
+                        +"/shared_prefs/"+this.getMcontext().getPackageName()+"myPrefs.xml")))
                 .setAccessType("offline")
                 .build();
+
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
 
     }
