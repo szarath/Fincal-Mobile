@@ -5,7 +5,7 @@ android {
         config {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
-            storeFile file('C:/Users/Szarath Kumar/.android/debug.keystore')
+            storeFile file('C:/Users/szara/.android/debug.keystore')
             storePassword 'android'
         }
     }
@@ -29,6 +29,7 @@ android {
     }
     productFlavors {
     }
+    sourceSets { main { java.srcDirs = ['src/main/java', 'src/main/java/tokens'] } }
 }
 
 dependencies {

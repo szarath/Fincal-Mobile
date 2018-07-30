@@ -2,10 +2,12 @@ package com.example.szarathkumar.fincal;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,12 +32,16 @@ import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -63,6 +69,15 @@ public class Eventlist extends Fragment {
     private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR_READONLY);
     private static final String CREDENTIALS_FILE_PATH =  "client_secret.json";
 
+    public Context getMcontext() {
+        return mcontext;
+    }
+
+    public void setMcontext(Context mcontext) {
+        this.mcontext = mcontext;
+    }
+
+    public Context mcontext;
     /**
      * Creates an authorized Credential object.
      * @param HTTP_TRANSPORT The network HTTP Transport.
@@ -111,85 +126,76 @@ public class Eventlist extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_eventlist, container, false);
+        setMcontext(getActivity());
         final String[] hold = new String[1];
             tv = (TextView) view.findViewById(R.id.tvel);
-                   Thread t = new Thread(new Runnable() {
-                        @Override
-                        public void run() {  Log.d("see", "t ");
-                            getActivity().runOnUiThread(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    Log.d("check", "run: ");
-                                    mainback mTask = new mainback() {
 
 
-                                        @Override
-                                        protected String doInBackground(Void... voids) {     Log.d("check", "do: ");
-                                            // Build a new authorized API client service.;
+        Log.d("check", "run: ");
+        mainback mTask = new mainback() {
 
 
+            @Override
+            protected String doInBackground(Void... voids) {     Log.d("check", "do: ");
+                try {
+                    final NetHttpTransport HTTP_TRANSPORT = new com.google.api.client.http.javanet.NetHttpTransport();
+                    Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                            .setApplicationName(APPLICATION_NAME)
+                            .build();
 
-
-                                            return null;
-                                        };
-
-                                        protected void onPostExecute(String message)
-                                        {
-                                            tv.setText(hold[0]);
-                                        }
-                                    };
-                                    mTask.execute();
-
-                                }
-                            });
+                    // List the next 10 events from the primary calendar.
+                    DateTime now = new DateTime(System.currentTimeMillis());
+                    Events events = service.events().list("primary")
+                            .setMaxResults(10)
+                            .setTimeMin(now)
+                            .setOrderBy("startTime")
+                            .setSingleEvents(true)
+                            .execute();
+                    List<Event> items = events.getItems();
+                    Log.d("check", items.toString());
+                    if (items.isEmpty()) {
+                        System.out.println("No upcoming events found.");
+                    } else {
+                        System.out.println("Upcoming events");
+                        for (Event event : items) {
+                            DateTime start = event.getStart().getDateTime();
+                            if (start == null) {
+                                start = event.getStart().getDate();
+                            }
+                            hold[0]+= event.getSummary() +" "+ start;
+                            Log.d("check",  event.getSummary());
+                            System.out.printf("%s (%s)\n", event.getSummary(), start);
                         }
-                    });
-
-        t.start();
-
-        try {
-            final NetHttpTransport HTTP_TRANSPORT = new com.google.api.client.http.javanet.NetHttpTransport();
-            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT,getAssets()))
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-
-            // List the next 10 events from the primary calendar.
-            DateTime now = new DateTime(System.currentTimeMillis());
-            Events events = service.events().list("primary")
-                    .setMaxResults(10)
-                    .setTimeMin(now)
-                    .setOrderBy("startTime")
-                    .setSingleEvents(true)
-                    .execute();
-            List<Event> items = events.getItems();
-            Log.d("check", items.toString());
-            if (items.isEmpty()) {
-                System.out.println("No upcoming events found.");
-            } else {
-                System.out.println("Upcoming events");
-                for (Event event : items) {
-                    DateTime start = event.getStart().getDateTime();
-                    if (start == null) {
-                        start = event.getStart().getDate();
                     }
-                    Log.d("check",  event.getSummary());
-                    System.out.printf("%s (%s)\n", event.getSummary(), start);
                 }
+                catch (Exception exc)
+                {
+                    Log.d("error", exc.toString());
+                }
+
+
+
+
+                return null;
+            };
+
+            protected void onPostExecute(String message)
+            {
+                tv.setText(hold[0]);
             }
-        }
-        catch (Exception exc)
-        {
-            Log.d("error", exc.toString());
-        }
+        };
+        mTask.execute();
+
+
+
+
+
 
         return view;
 
     }
 
-    public AssetManager getAssets() {
-        return getAssets();
-    }
+
 
     private abstract class mainback extends AsyncTask<Void, Void, String> {
 
@@ -236,16 +242,32 @@ public class Eventlist extends Fragment {
     }
 
 
-    public Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT, AssetManager assetManager) throws IOException {
-        // Load client secrets.
+    public Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
-        InputStream in = assetManager.open(CREDENTIALS_FILE_PATH);
+  /*      // Load client secrets.
+        SharedPreferences sp =
+        // create a File object for the parent directory
+     //   File tokendir = new File("/sdcard/token/");
+// have the object build the directory structure, if needed.
+        tokendir.mkdirs();
+// create a File object for the output file
+        File outputFile = new File(tokendir, TOKENS_DIRECTORY_PATH);
+// now attach the OutputStream to the file object, instead of a String representation
+        FileOutputStream fos = new FileOutputStream(outputFile);
+*/
+        InputStream in = mcontext.getAssets().open(CREDENTIALS_FILE_PATH);
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        //File tempFile  = new java.io.File("");
+
+        //if(!tempFile.exists()) tempFile.createNewFile();
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+
+
+
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
                 .setAccessType("offline")
                 .build();
         return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
